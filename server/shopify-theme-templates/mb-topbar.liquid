@@ -1,0 +1,245 @@
+{% style %}
+
+.membership-validity {
+  font-size: 9px;
+  text-transform: uppercase;
+  padding: 3px;
+  background: lightgrey;
+  color: white;
+  font-weight: bold;
+  border-radius: 5px;
+}
+
+.mb-topbar {
+    background-color: red;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    padding: 0.5em;
+    border-bottom: 1px solid grey;
+    text-align: center;
+    z-index: 2;
+}
+
+.mb-topbar-content {
+    font-size: {{ section.settings.font_size }}px;
+    font-family: {{ section.settings.font.family }};
+    font-style: {{ section.settings.font.style }};
+    font-weight: {{ section.settings.font.weight }};
+}
+
+.mb-topbar-content p, .mb-topbar-content p a {
+    color: {{ section.settings.custom_color }};
+    display: inline-block;
+    margin: 0.5em 0;
+}
+
+.mb-topbar-content a.btn {
+    margin-left: 8px;
+}
+
+
+
+
+
+
+.mb-modal {
+  position: fixed;
+  top: 220px;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  transition: 200ms ease-in-out;
+  border: 1px solid black;
+  border-radius: 10px;
+  z-index: 2;
+  background-color: white;
+  width: 500px;
+  max-width: 80%;
+}
+
+.mb-modal.active {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.mb-modal-header {
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid black;
+}
+
+.mb-modal-header .title {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.mb-modal-header .close-button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background: none;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.mb-modal-body {
+  padding: 10px 15px;
+}
+
+#overlay {
+  position: fixed;
+  opacity: 0;
+  transition: 200ms ease-in-out;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, .5);
+  pointer-events: none;
+}
+
+#overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+
+.table-memberships {
+  margin-top: 2em;
+}
+
+#btn-connect, #btn-disconnect {
+  margin: 1em auto;
+  display: block;
+}
+
+#selected-account {
+  font-family: Courier,monospace;
+  font-size: 12px;
+}
+
+{% endstyle %}
+
+
+{% capture on_click_script %}
+window.showMemberBenefitsModal([
+  {% for block in section.blocks %}
+    {% case block.type %}
+    {% when 'lock' %}
+      {
+        name: "{{ block.settings.membership }}",
+        locks: window.locksByMembershipName["{{ block.settings.membership }}"]
+      }
+      {% if forloop.last != true %},{% endif %}
+    {% endcase %}
+  {% endfor %}
+], {{ section.settings.enable_open_new_tab }})
+{% endcapture %}
+<div
+    data-section-id="{{ section.id }}"
+    class="mb-topbar {% if section.settings.enable_hide_unlocked %} hidden-after-unlocked{% endif %}"
+    style="background:{{ section.settings.custom_background_color }};"
+    data-section-type="topbar-section"
+>
+    <div class="mb-topbar-content">
+    {{ section.settings.text }}
+    <a href="#" class="btn" onclick='{{ on_click_script }}'>
+        {{ section.settings.button_text }}
+    </a>
+    </div>
+
+</div>
+
+{% schema %}
+{
+  "name": "MB|Top-bar",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enable_hide_unlocked",
+      "label": "Hidden if unlocked",
+      "info": "If enabled, the top-bar will not be displayed to members.",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_open_new_tab",
+      "label": "Open in new tab",
+      "info": "If unchecked, the redirect happens in the same browser tab",
+      "default": false
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Content",
+      "default": "<p>Member Benefits</p>"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button text",
+      "default": "Unlock"
+    },
+    {
+      "type": "font_picker",
+      "id": "font",
+      "label": "Font",
+      "default": "helvetica_n4"
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "min": 7,
+      "max": 64,
+      "step": 1,
+      "unit": "px",
+      "label": "Font size",
+      "default": 14
+    },
+    {
+      "type": "color",
+      "id": "custom_color",
+      "label": "Font color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "custom_background_color",
+      "label": "Background color",
+      "default": "#000000"
+    }
+  ],
+  "blocks": [
+      {
+        "type": "lock",
+        "name": "Membership",
+        "settings": [
+          {
+            "type": "select",
+            "id": "membership",
+            "label": "Membership",
+            "options": __MEMBERSHIP_SECTION_SETTING_OPTIONS__,
+            "info": "Select memberships for this section"
+          }
+        ]
+      }
+  ],
+  "presets": [
+    {
+      "name": "MB|Top-bar",
+      "category": {
+        "en": "Promotional"
+      },
+      "blocks": [
+        {
+            "type": "lock",
+            "settings": {
+                "membership": __LOCK_VALUES__
+            }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
